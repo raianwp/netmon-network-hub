@@ -10,7 +10,7 @@ import { checkForUpdate } from "../lib/update.js";
 const router = Router();
 const execAsync = promisify(exec);
 
-const APP_VERSION = "4.6";
+const APP_VERSION = "4.8";
 
 async function runCmd(cmd: string): Promise<string> {
   try {
@@ -53,7 +53,7 @@ router.get("/system/info", requireAuth, async (_req, res) => {
 
   res.json({
     appName: "NetMon",
-    appVersion: "4.6",
+    appVersion: "4.8",
     appDescription: "Network HUB para administradores de rede: monitoramento de hosts via ping ICMP, monitoramento detalhado de hosts Windows via NetMon Agent (CPU, RAM, uptime, processos), dashboard MikroTik completo (RouterOS REST API — recursos, temperatura, tráfego em tempo real, firewall, endereços IP, log do sistema), descoberta de hosts, terminal SSH/Telnet integrado, chat com IA (Claude, GPT, Gemini, DeepSeek, Groq) com leitura do terminal e execução de comandos mediante aprovação, e verificação de novas versões direto pela tela de Informações.",
     developerName: "Raian William",
     developerEmail: "raian_wp@hotmail.com",
