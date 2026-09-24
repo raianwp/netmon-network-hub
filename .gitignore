@@ -51,5 +51,6 @@ Thumbs.db
 # NetMon
 .env
 .claude/
+CLAUDE.md
 backups/
 *.zip
