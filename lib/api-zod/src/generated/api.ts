@@ -560,16 +560,6 @@ export const CheckSystemUpdateResponse = zod.object({
 
 
 /**
- * @summary Pull the latest version from GitHub, install deps, apply DB schema and rebuild; restarts the service on success
- */
-export const ApplySystemUpdateResponse = zod.object({
-  "success": zod.boolean(),
-  "version": zod.string().optional(),
-  "error": zod.string().optional()
-})
-
-
-/**
  * @summary Get MikroTik router config
  */
 export const GetMikrotikConfigResponse = zod.object({

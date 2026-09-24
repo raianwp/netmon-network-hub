@@ -669,12 +669,6 @@ export interface UpdateCheckResult {
   error?: string;
 }
 
-export interface UpdateApplyResult {
-  success: boolean;
-  version?: string;
-  error?: string;
-}
-
 export type ListHostsParams = {
 type?: ListHostsType;
 };

@@ -1,9 +1,13 @@
-import { useGetSystemInfo, useApplySystemUpdate } from "@workspace/api-client-react";
+import { useState } from "react";
+import { useGetSystemInfo } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Info, Code2, Server, Database, Globe, User, Mail, Tag, Cpu, Clock, HardDrive, RefreshCw, Download } from "lucide-react";
+import { Loader2, Info, Code2, Server, Database, Globe, User, Mail, Tag, Cpu, Clock, HardDrive, RefreshCw, Download, Terminal, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useUpdateCheck } from "@/hooks/use-update-check";
 import { useToast } from "@/hooks/use-toast";
+
+const UPDATE_COMMAND = 'sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/raianwp/netmon-network-hub/main/install.sh)"';
 
 function formatUptime(seconds: number): string {
   const d = Math.floor(seconds / 86400);
@@ -33,37 +37,30 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
 export default function SystemInfo() {
   const { data, isLoading, isError } = useGetSystemInfo();
   const { data: updateCheck, isFetching: isCheckingUpdate, refetch: refetchUpdateCheck } = useUpdateCheck();
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
-  const applyUpdate = useApplySystemUpdate({
-    mutation: {
-      onSuccess: (result) => {
-        if (result.success) {
-          toast({
-            title: `Atualizando para v${result.version}`,
-            description: "O servidor vai reiniciar em instantes. A página será recarregada automaticamente.",
-          });
-          setTimeout(() => window.location.reload(), 8000);
-        } else {
-          toast({
-            title: "Falha ao atualizar",
-            description: result.error ?? "A versão anterior continua em execução.",
-            variant: "destructive",
-          });
-        }
-      },
-      onError: (err) => {
-        toast({
-          title: "Falha ao atualizar",
-          description: err instanceof Error ? err.message : "Não foi possível concluir a atualização.",
-          variant: "destructive",
-        });
-      },
-    },
-  });
-
   const handleUpdate = () => {
-    applyUpdate.mutate();
+    setCopied(false);
+    setUpdateDialogOpen(true);
+  };
+
+  const handleCheckUpdate = async () => {
+    const result = await refetchUpdateCheck();
+    if (result.data && !result.data.hasUpdate && !result.data.error) {
+      toast({ title: "Você já está na versão mais recente", description: `v${result.data.installedVersion} é a versão mais nova disponível.` });
+    }
+  };
+
+  const handleCopyCommand = async () => {
+    try {
+      await navigator.clipboard.writeText(UPDATE_COMMAND);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "Não foi possível copiar", description: "Copie o comando manualmente.", variant: "destructive" });
+    }
   };
 
   return (
@@ -116,7 +113,7 @@ export default function SystemInfo() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => refetchUpdateCheck()}
+                      onClick={handleCheckUpdate}
                       disabled={isCheckingUpdate}
                       className="font-mono text-[10px] h-7 px-2 cursor-pointer"
                     >
@@ -127,15 +124,10 @@ export default function SystemInfo() {
                       <Button
                         size="sm"
                         onClick={handleUpdate}
-                        disabled={applyUpdate.isPending}
-                        className="font-mono text-[10px] h-7 px-2 cursor-pointer bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-60"
+                        className="font-mono text-[10px] h-7 px-2 cursor-pointer bg-amber-500 hover:bg-amber-600 text-white"
                       >
-                        {applyUpdate.isPending ? (
-                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                        ) : (
-                          <Download className="w-3 h-3 mr-1" />
-                        )}
-                        {applyUpdate.isPending ? "Atualizando..." : "Atualizar"}
+                        <Download className="w-3 h-3 mr-1" />
+                        Atualizar
                       </Button>
                     )}
                   </div>
@@ -195,6 +187,46 @@ export default function SystemInfo() {
 
         </div>
       )}
+
+      <Dialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
+        <DialogContent className="font-mono">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Download className="w-5 h-5 text-primary" />
+              Atualizar para v{updateCheck?.latestVersion}
+            </DialogTitle>
+            <DialogDescription className="text-sm pt-2">
+              A atualização é feita por SSH direto no servidor. Conecte-se a ele, cole o comando abaixo e, no menu que aparecer, escolha a opção <span className="text-foreground">1) Atualizar NetMon</span>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="relative">
+            <pre className="text-[11px] bg-secondary/50 border border-border rounded-md p-3 pr-10 whitespace-pre-wrap break-all">{UPDATE_COMMAND}</pre>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleCopyCommand}
+              className="absolute top-1.5 right-1.5 h-7 w-7 p-0 cursor-pointer"
+              title="Copiar comando"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+            </Button>
+          </div>
+
+          <DialogFooter>
+            <a
+              href={`ssh://root@${typeof window !== "undefined" ? window.location.hostname : "localhost"}`}
+              onClick={() => setUpdateDialogOpen(false)}
+              className="inline-flex items-center justify-center w-full sm:w-auto"
+            >
+              <Button className="font-mono w-full sm:w-auto cursor-pointer">
+                <Terminal className="w-4 h-4 mr-2" />
+                Abrir SSH
+              </Button>
+            </a>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -63,7 +63,6 @@ import type {
   SshHostUpdate,
   SystemInfo,
   TestHostAgentParams,
-  UpdateApplyResult,
   UpdateCheckResult,
   User,
   UserInput,
@@ -2519,76 +2518,6 @@ export function useCheckSystemUpdate<TData = Awaited<ReturnType<typeof checkSyst
 
 
 
-
-export const getApplySystemUpdateUrl = () => {
-
-
-
-
-  return `/api/system/update/apply`
-}
-
-/**
- * @summary Pull the latest version from GitHub, install deps, apply DB schema and rebuild; restarts the service on success
- */
-export const applySystemUpdate = async ( options?: RequestInit): Promise<UpdateApplyResult> => {
-
-  return customFetch<UpdateApplyResult>(getApplySystemUpdateUrl(),
-  {
-    ...options,
-    method: 'POST'
-
-
-  }
-);}
-
-
-
-
-export const getApplySystemUpdateMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof applySystemUpdate>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof applySystemUpdate>>, TError,void, TContext> => {
-
-const mutationKey = ['applySystemUpdate'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof applySystemUpdate>>, void> = () => {
-
-
-          return  applySystemUpdate(requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ApplySystemUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof applySystemUpdate>>>
-
-    export type ApplySystemUpdateMutationError = ErrorType<unknown>
-
-    /**
- * @summary Pull the latest version from GitHub, install deps, apply DB schema and rebuild; restarts the service on success
- */
-export const useApplySystemUpdate = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof applySystemUpdate>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof applySystemUpdate>>,
-        TError,
-        void,
-        TContext
-      > => {
-      return useMutation(getApplySystemUpdateMutationOptions(options));
-    }
 
 export const getGetMikrotikConfigUrl = () => {
 

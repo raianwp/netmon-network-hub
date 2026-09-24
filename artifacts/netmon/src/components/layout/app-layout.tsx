@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { StatusNotifications } from "@/components/status-notifications";
 import { useGetInternetStatus, getGetInternetStatusQueryKey } from "@workspace/api-client-react";
 
-const APP_VERSION = "4.6.1";
+const APP_VERSION = "4.6";
 
 function VersionFooter() {
   const { data, isFetching, refetch } = useUpdateCheck();
