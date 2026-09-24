@@ -662,6 +662,19 @@ export interface SystemInfo {
   dbSize: string;
 }
 
+export interface UpdateCheckResult {
+  hasUpdate: boolean;
+  installedVersion: string;
+  latestVersion: string;
+  error?: string;
+}
+
+export interface UpdateApplyResult {
+  success: boolean;
+  version?: string;
+  error?: string;
+}
+
 export type ListHostsParams = {
 type?: ListHostsType;
 };

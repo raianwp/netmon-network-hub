@@ -643,6 +643,32 @@ paths:
               schema:
                 $ref: "#/components/schemas/SystemInfo"
 
+  /system/update/check:
+    get:
+      operationId: checkSystemUpdate
+      tags: [system]
+      summary: Check for a newer version on the GitHub repository
+      responses:
+        "200":
+          description: Update check result (always 200, even on failure to reach GitHub — see error field)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateCheckResult"
+
+  /system/update/apply:
+    post:
+      operationId: applySystemUpdate
+      tags: [system]
+      summary: Pull the latest version from GitHub, install deps, apply DB schema and rebuild; restarts the service on success
+      responses:
+        "200":
+          description: Update result (always 200; success=false on failure, with the previous version left running)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateApplyResult"
+
   /mikrotik/config:
     get:
       operationId: getMikrotikConfig
@@ -1702,3 +1728,27 @@ components:
         dbSize:
           type: string
       required: [appName, appVersion, appDescription, developerName, developerEmail, nodeVersion, hostname, uptimeSeconds, osKernel, osDistro, postgresVersion, nginxVersion, dbSize]
+
+    UpdateCheckResult:
+      type: object
+      properties:
+        hasUpdate:
+          type: boolean
+        installedVersion:
+          type: string
+        latestVersion:
+          type: string
+        error:
+          type: string
+      required: [hasUpdate, installedVersion, latestVersion]
+
+    UpdateApplyResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        version:
+          type: string
+        error:
+          type: string
+      required: [success]

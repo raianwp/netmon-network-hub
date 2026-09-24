@@ -66,6 +66,8 @@ export * from './sshHostUpdateProtocol';
 export * from './sshHostUpdateSystemType';
 export * from './systemInfo';
 export * from './testHostAgentParams';
+export * from './updateApplyResult';
+export * from './updateCheckResult';
 export * from './user';
 export * from './userInput';
 export * from './userInputRole';

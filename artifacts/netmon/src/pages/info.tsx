@@ -1,4 +1,4 @@
-import { useGetSystemInfo } from "@workspace/api-client-react";
+import { useGetSystemInfo, useApplySystemUpdate } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Info, Code2, Server, Database, Globe, User, Mail, Tag, Cpu, Clock, HardDrive, RefreshCw, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,8 +35,35 @@ export default function SystemInfo() {
   const { data: updateCheck, isFetching: isCheckingUpdate, refetch: refetchUpdateCheck } = useUpdateCheck();
   const { toast } = useToast();
 
+  const applyUpdate = useApplySystemUpdate({
+    mutation: {
+      onSuccess: (result) => {
+        if (result.success) {
+          toast({
+            title: `Atualizando para v${result.version}`,
+            description: "O servidor vai reiniciar em instantes. A página será recarregada automaticamente.",
+          });
+          setTimeout(() => window.location.reload(), 8000);
+        } else {
+          toast({
+            title: "Falha ao atualizar",
+            description: result.error ?? "A versão anterior continua em execução.",
+            variant: "destructive",
+          });
+        }
+      },
+      onError: (err) => {
+        toast({
+          title: "Falha ao atualizar",
+          description: err instanceof Error ? err.message : "Não foi possível concluir a atualização.",
+          variant: "destructive",
+        });
+      },
+    },
+  });
+
   const handleUpdate = () => {
-    toast({ title: "Em desenvolvimento", description: "A atualização automática ainda não está disponível — essa é só a parte visual." });
+    applyUpdate.mutate();
   };
 
   return (
@@ -100,10 +127,15 @@ export default function SystemInfo() {
                       <Button
                         size="sm"
                         onClick={handleUpdate}
-                        className="font-mono text-[10px] h-7 px-2 cursor-pointer bg-amber-500 hover:bg-amber-600 text-white"
+                        disabled={applyUpdate.isPending}
+                        className="font-mono text-[10px] h-7 px-2 cursor-pointer bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-60"
                       >
-                        <Download className="w-3 h-3 mr-1" />
-                        Atualizar
+                        {applyUpdate.isPending ? (
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        ) : (
+                          <Download className="w-3 h-3 mr-1" />
+                        )}
+                        {applyUpdate.isPending ? "Atualizando..." : "Atualizar"}
                       </Button>
                     )}
                   </div>

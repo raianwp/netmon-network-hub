@@ -63,6 +63,8 @@ import type {
   SshHostUpdate,
   SystemInfo,
   TestHostAgentParams,
+  UpdateApplyResult,
+  UpdateCheckResult,
   User,
   UserInput,
   UserUpdate
@@ -2440,6 +2442,153 @@ export function useGetSystemInfo<TData = Awaited<ReturnType<typeof getSystemInfo
 
 
 
+
+export const getCheckSystemUpdateUrl = () => {
+
+
+
+
+  return `/api/system/update/check`
+}
+
+/**
+ * @summary Check for a newer version on the GitHub repository
+ */
+export const checkSystemUpdate = async ( options?: RequestInit): Promise<UpdateCheckResult> => {
+
+  return customFetch<UpdateCheckResult>(getCheckSystemUpdateUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getCheckSystemUpdateQueryKey = () => {
+    return [
+    `/api/system/update/check`
+    ] as const;
+    }
+
+
+export const getCheckSystemUpdateQueryOptions = <TData = Awaited<ReturnType<typeof checkSystemUpdate>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof checkSystemUpdate>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCheckSystemUpdateQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkSystemUpdate>>> = ({ signal }) => checkSystemUpdate({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkSystemUpdate>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type CheckSystemUpdateQueryResult = NonNullable<Awaited<ReturnType<typeof checkSystemUpdate>>>
+export type CheckSystemUpdateQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Check for a newer version on the GitHub repository
+ */
+
+export function useCheckSystemUpdate<TData = Awaited<ReturnType<typeof checkSystemUpdate>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof checkSystemUpdate>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getCheckSystemUpdateQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getApplySystemUpdateUrl = () => {
+
+
+
+
+  return `/api/system/update/apply`
+}
+
+/**
+ * @summary Pull the latest version from GitHub, install deps, apply DB schema and rebuild; restarts the service on success
+ */
+export const applySystemUpdate = async ( options?: RequestInit): Promise<UpdateApplyResult> => {
+
+  return customFetch<UpdateApplyResult>(getApplySystemUpdateUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getApplySystemUpdateMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof applySystemUpdate>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof applySystemUpdate>>, TError,void, TContext> => {
+
+const mutationKey = ['applySystemUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof applySystemUpdate>>, void> = () => {
+
+
+          return  applySystemUpdate(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApplySystemUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof applySystemUpdate>>>
+
+    export type ApplySystemUpdateMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Pull the latest version from GitHub, install deps, apply DB schema and rebuild; restarts the service on success
+ */
+export const useApplySystemUpdate = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof applySystemUpdate>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof applySystemUpdate>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getApplySystemUpdateMutationOptions(options));
+    }
 
 export const getGetMikrotikConfigUrl = () => {
 

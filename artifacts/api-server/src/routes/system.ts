@@ -4,7 +4,8 @@ import { promisify } from "util";
 import os from "os";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth.js";
+import { requireAuth, requireAdmin } from "../middlewares/auth.js";
+import { checkForUpdate, applyUpdate } from "../lib/update.js";
 
 const router = Router();
 const execAsync = promisify(exec);
@@ -50,8 +51,8 @@ router.get("/system/info", requireAuth, async (_req, res) => {
 
   res.json({
     appName: "NetMon",
-    appVersion: "4.5",
-    appDescription: "Network HUB para administradores de rede: monitoramento de hosts via ping ICMP, monitoramento detalhado de hosts Windows via NetMon Agent (CPU, RAM, uptime, processos), dashboard MikroTik completo (RouterOS REST API — recursos, temperatura, tráfego em tempo real, firewall, endereços IP, log do sistema), descoberta de hosts, terminal SSH/Telnet integrado e chat com IA (Claude, GPT, Gemini, DeepSeek, Groq) com leitura do terminal e execução de comandos mediante aprovação.",
+    appVersion: "4.6",
+    appDescription: "Network HUB para administradores de rede: monitoramento de hosts via ping ICMP, monitoramento detalhado de hosts Windows via NetMon Agent (CPU, RAM, uptime, processos), dashboard MikroTik completo (RouterOS REST API — recursos, temperatura, tráfego em tempo real, firewall, endereços IP, log do sistema), descoberta de hosts, terminal SSH/Telnet integrado, chat com IA (Claude, GPT, Gemini, DeepSeek, Groq) com leitura do terminal e execução de comandos mediante aprovação, e atualização automática via GitHub direto pela tela de Informações.",
     developerName: "Raian William",
     developerEmail: "raian_wp@hotmail.com",
     nodeVersion: process.version,
@@ -63,6 +64,19 @@ router.get("/system/info", requireAuth, async (_req, res) => {
     nginxVersion,
     dbSize,
   });
+});
+
+router.get("/system/update/check", requireAdmin, async (_req, res) => {
+  const result = await checkForUpdate();
+  res.json(result);
+});
+
+router.post("/system/update/apply", requireAdmin, async (_req, res) => {
+  const result = await applyUpdate();
+  res.json(result);
+  if (result.success) {
+    setTimeout(() => process.exit(0), 300);
+  }
 });
 
 export default router;

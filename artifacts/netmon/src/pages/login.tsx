@@ -78,7 +78,7 @@ export default function Login() {
           </div>
           <h1 className="text-3xl font-bold font-mono tracking-tight text-foreground mb-2">NETMON</h1>
           <p className="text-sm text-muted-foreground font-mono tracking-wider">NETWORK HUB</p>
-          <p className="text-[10px] text-muted-foreground/60 font-mono tracking-widest mt-1">v4.5</p>
+          <p className="text-[10px] text-muted-foreground/60 font-mono tracking-widest mt-1">v4.6</p>
         </div>
 
         <div className="bg-card/50 backdrop-blur-md border border-border rounded-xl p-8 shadow-2xl relative overflow-hidden">
