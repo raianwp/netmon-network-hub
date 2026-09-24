@@ -1,0 +1,40 @@
+import { Router, type IRouter } from "express";
+import healthRouter from "./health.js";
+import authRouter from "./auth.js";
+import usersRouter from "./users.js";
+import hostsRouter from "./hosts.js";
+import monitoringRouter from "./monitoring.js";
+import pingTestRouter from "./ping-test.js";
+import mikrotikRouter from "./mikrotik.js";
+import settingsRouter from "./settings.js";
+import backupRouter from "./backup.js";
+import systemRouter from "./system.js";
+import discoveryRouter from "./discovery.js";
+import internetRouter from "./internet.js";
+import sshHostsRouter from "./ssh-hosts.js";
+import llmConfigRouter from "./llm-config.js";
+import llmModelsRouter from "./llm-models.js";
+import chatRouter from "./chat.js";
+import agentMetricsRouter from "./agent-metrics.js";
+
+const router: IRouter = Router();
+
+router.use(healthRouter);
+router.use(authRouter);
+router.use(usersRouter);
+router.use(hostsRouter);
+router.use(discoveryRouter);
+router.use(monitoringRouter);
+router.use(pingTestRouter);
+router.use(mikrotikRouter);
+router.use(settingsRouter);
+router.use(backupRouter);
+router.use(systemRouter);
+router.use(internetRouter);
+router.use(sshHostsRouter);
+router.use(llmConfigRouter);
+router.use(llmModelsRouter);
+router.use(chatRouter);
+router.use(agentMetricsRouter);
+
+export default router;

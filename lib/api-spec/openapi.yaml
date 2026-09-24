@@ -1,0 +1,1704 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: NetMon — Network Monitoring API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication
+  - name: users
+    description: User management
+  - name: hosts
+    description: Host management
+  - name: monitoring
+    description: Monitoring status
+  - name: mikrotik
+    description: MikroTik router data
+  - name: settings
+    description: Application settings
+  - name: system
+    description: System information
+  - name: ssh-hosts
+    description: SSH/Telnet terminal hosts
+  - name: llm-config
+    description: LLM provider API key configuration
+  - name: llm-models
+    description: Editable model list per LLM provider
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    put:
+      operationId: updateUser
+      tags: [users]
+      summary: Update a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Delete a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /hosts:
+    get:
+      operationId: listHosts
+      tags: [hosts]
+      summary: List all hosts
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pc, server]
+      responses:
+        "200":
+          description: List of hosts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Host"
+    post:
+      operationId: createHost
+      tags: [hosts]
+      summary: Create a host
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HostInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Host"
+
+  /hosts/{id}:
+    put:
+      operationId: updateHost
+      tags: [hosts]
+      summary: Update a host
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HostUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Host"
+    delete:
+      operationId: deleteHost
+      tags: [hosts]
+      summary: Delete a host
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /hosts/{id}/agent/latest:
+    get:
+      operationId: getHostAgentLatest
+      tags: [hosts]
+      summary: Latest windows_exporter metrics sample for a host
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Latest sample
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostAgentMetric"
+        "404":
+          description: No metrics collected yet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /hosts/{id}/agent/refresh:
+    post:
+      operationId: refreshHostAgent
+      tags: [hosts]
+      summary: Force an immediate windows_exporter scrape for a host and return the updated sample
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Freshly collected sample
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostAgentMetric"
+        "404":
+          description: Host not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /hosts/{id}/agent/test:
+    get:
+      operationId: testHostAgent
+      tags: [hosts]
+      summary: Test the windows_exporter connection for a host (single scrape)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: ip
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: port
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostAgentTestResult"
+
+  /ssh-hosts:
+    get:
+      operationId: listSshHosts
+      tags: [ssh-hosts]
+      summary: List all SSH/Telnet terminal hosts
+      responses:
+        "200":
+          description: List of SSH hosts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SshHost"
+    post:
+      operationId: createSshHost
+      tags: [ssh-hosts]
+      summary: Create an SSH/Telnet terminal host
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SshHostInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SshHost"
+
+  /ssh-hosts/{id}:
+    put:
+      operationId: updateSshHost
+      tags: [ssh-hosts]
+      summary: Update an SSH/Telnet terminal host
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SshHostUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SshHost"
+    delete:
+      operationId: deleteSshHost
+      tags: [ssh-hosts]
+      summary: Delete an SSH/Telnet terminal host
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /llm-config:
+    get:
+      operationId: listLlmConfig
+      tags: [llm-config]
+      summary: List LLM provider configuration status (never returns the API key)
+      responses:
+        "200":
+          description: Status per provider
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LlmProviderStatus"
+
+  /llm-config/{provider}:
+    put:
+      operationId: saveLlmConfig
+      tags: [llm-config]
+      summary: Save (create or replace) the API key for a provider
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [claude, gpt, gemini, deepseek, groq]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LlmProviderKeyInput"
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LlmProviderStatus"
+    delete:
+      operationId: deleteLlmConfig
+      tags: [llm-config]
+      summary: Remove the stored API key for a provider
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [claude, gpt, gemini, deepseek, groq]
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /llm-config/{provider}/test:
+    post:
+      operationId: testLlmConfig
+      tags: [llm-config]
+      summary: Test an API key against the provider (does not need to be saved first)
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [claude, gpt, gemini, deepseek, groq]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LlmProviderTestInput"
+      responses:
+        "200":
+          description: Test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LlmProviderTestResult"
+
+  /llm-models:
+    get:
+      operationId: listLlmModels
+      tags: [llm-models]
+      summary: List models configured for every provider
+      responses:
+        "200":
+          description: All models
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LlmModel"
+    post:
+      operationId: createLlmModel
+      tags: [llm-models]
+      summary: Add a model to a provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LlmModelInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LlmModel"
+
+  /llm-models/{id}:
+    put:
+      operationId: updateLlmModel
+      tags: [llm-models]
+      summary: Update a model
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LlmModelUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LlmModel"
+    delete:
+      operationId: deleteLlmModel
+      tags: [llm-models]
+      summary: Remove a model
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /hosts/discover:
+    post:
+      operationId: discoverHosts
+      tags: [hosts]
+      summary: Scan network range for hosts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HostDiscoveryInput"
+      responses:
+        "200":
+          description: Discovered hosts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiscoveredHost"
+
+  /monitoring/statuses:
+    get:
+      operationId: listHostStatuses
+      tags: [monitoring]
+      summary: Get latest status for all hosts
+      responses:
+        "200":
+          description: Host statuses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HostStatus"
+
+  /monitoring/summary:
+    get:
+      operationId: getMonitoringSummary
+      tags: [monitoring]
+      summary: Get monitoring summary counts
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonitoringSummary"
+
+  /monitoring/trigger:
+    post:
+      operationId: triggerMonitoring
+      tags: [monitoring]
+      summary: Manually trigger a monitoring cycle
+      responses:
+        "200":
+          description: Triggered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /system/info:
+    get:
+      operationId: getSystemInfo
+      tags: [system]
+      summary: Get system and application information
+      responses:
+        "200":
+          description: System information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemInfo"
+
+  /mikrotik/config:
+    get:
+      operationId: getMikrotikConfig
+      tags: [mikrotik]
+      summary: Get MikroTik router config
+      responses:
+        "200":
+          description: MikroTik config (may be null if not configured)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MikrotikConfig"
+    post:
+      operationId: saveMikrotikConfig
+      tags: [mikrotik]
+      summary: Save MikroTik router config
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MikrotikConfigInput"
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MikrotikConfig"
+
+  /mikrotik/interfaces:
+    get:
+      operationId: getMikrotikInterfaces
+      tags: [mikrotik]
+      summary: Get MikroTik interface list and status
+      responses:
+        "200":
+          description: Interface list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MikrotikInterface"
+        "503":
+          description: Cannot connect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /mikrotik/health:
+    get:
+      operationId: getMikrotikHealth
+      tags: [mikrotik]
+      summary: Get MikroTik hardware health (CPU temperature)
+      responses:
+        "200":
+          description: Health reading
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MikrotikHealth"
+        "503":
+          description: Cannot connect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /mikrotik/firewall/filter:
+    get:
+      operationId: getMikrotikFirewallFilter
+      tags: [mikrotik]
+      summary: Get MikroTik firewall filter rules
+      responses:
+        "200":
+          description: Filter rule list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MikrotikFirewallFilterRule"
+        "503":
+          description: Cannot connect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /mikrotik/firewall/nat:
+    get:
+      operationId: getMikrotikFirewallNat
+      tags: [mikrotik]
+      summary: Get MikroTik firewall NAT rules
+      responses:
+        "200":
+          description: NAT rule list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MikrotikFirewallNatRule"
+        "503":
+          description: Cannot connect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /mikrotik/addresses:
+    get:
+      operationId: getMikrotikAddresses
+      tags: [mikrotik]
+      summary: Get MikroTik configured IP addresses (RouterOS "Address" table)
+      responses:
+        "200":
+          description: Address list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MikrotikAddress"
+        "503":
+          description: Cannot connect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /mikrotik/log:
+    get:
+      operationId: getMikrotikLog
+      tags: [mikrotik]
+      summary: Get recent MikroTik system log entries
+      responses:
+        "200":
+          description: Log entries, most recent first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MikrotikLogEntry"
+        "503":
+          description: Cannot connect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /mikrotik/resources:
+    get:
+      operationId: getMikrotikResources
+      tags: [mikrotik]
+      summary: Get MikroTik CPU, RAM, uptime
+      responses:
+        "200":
+          description: System resources
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MikrotikResources"
+        "503":
+          description: Cannot connect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /mikrotik/routes:
+    get:
+      operationId: getMikrotikRoutes
+      tags: [mikrotik]
+      summary: Get MikroTik routing table
+      responses:
+        "200":
+          description: Route list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MikrotikRoute"
+        "503":
+          description: Cannot connect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /mikrotik/dhcp-leases:
+    get:
+      operationId: getMikrotikDhcpLeases
+      tags: [mikrotik]
+      summary: Get DHCP leases from MikroTik
+      responses:
+        "200":
+          description: DHCP lease list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MikrotikDhcpLease"
+        "503":
+          description: Cannot connect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /backup/status:
+    get:
+      operationId: getBackupStatus
+      tags: [backup]
+      summary: Get backup status
+      responses:
+        "200":
+          description: Backup status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackupStatus"
+
+  /backup/run:
+    post:
+      operationId: runBackup
+      tags: [backup]
+      summary: Trigger manual backup
+      responses:
+        "200":
+          description: Backup result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackupRunResult"
+        "500":
+          description: Backup failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackupRunResult"
+
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get application settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettings"
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update application settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppSettingsUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettings"
+
+  /internet/status:
+    get:
+      operationId: getInternetStatus
+      tags: [internet]
+      summary: Get internet connectivity status
+      responses:
+        "200":
+          description: Internet status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternetStatus"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    LoginInput:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        rememberMe:
+          type: boolean
+      required: [username, password]
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        role:
+          type: string
+          enum: [admin, viewer]
+        canAccessAiTerminal:
+          type: boolean
+      required: [id, username, role, canAccessAiTerminal]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        role:
+          type: string
+          enum: [admin, viewer]
+        canAccessAiTerminal:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, username, role, canAccessAiTerminal, createdAt]
+
+    UserInput:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [admin, viewer]
+        canAccessAiTerminal:
+          type: boolean
+      required: [username, password]
+
+    UserUpdate:
+      type: object
+      properties:
+        username:
+          type: ["string", "null"]
+        password:
+          type: ["string", "null"]
+        role:
+          type: ["string", "null"]
+          enum: [admin, viewer]
+        canAccessAiTerminal:
+          type: ["boolean", "null"]
+
+    Host:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        ipAddress:
+          type: string
+        type:
+          type: string
+          enum: [pc, server, device]
+        userName:
+          type: ["string", "null"]
+        sector:
+          type: ["string", "null"]
+        enabled:
+          type: boolean
+        notifyDesktop:
+          type: boolean
+        agentEnabled:
+          type: boolean
+        agentPort:
+          type: ["integer", "null"]
+        orderIndex:
+          type: integer
+        createdAt:
+          type: string
+      required: [id, name, ipAddress, type, enabled, notifyDesktop, agentEnabled, orderIndex, createdAt]
+
+    HostInput:
+      type: object
+      properties:
+        name:
+          type: string
+        ipAddress:
+          type: string
+        type:
+          type: string
+          enum: [pc, server, device]
+        userName:
+          type: ["string", "null"]
+        sector:
+          type: ["string", "null"]
+        enabled:
+          type: boolean
+        notifyDesktop:
+          type: boolean
+        agentEnabled:
+          type: boolean
+        agentPort:
+          type: ["integer", "null"]
+        orderIndex:
+          type: integer
+      required: [name, ipAddress, type]
+
+    HostUpdate:
+      type: object
+      properties:
+        name:
+          type: ["string", "null"]
+        ipAddress:
+          type: ["string", "null"]
+        type:
+          type: ["string", "null"]
+        userName:
+          type: ["string", "null"]
+        sector:
+          type: ["string", "null"]
+        enabled:
+          type: ["boolean", "null"]
+        notifyDesktop:
+          type: ["boolean", "null"]
+        agentEnabled:
+          type: ["boolean", "null"]
+        agentPort:
+          type: ["integer", "null"]
+        orderIndex:
+          type: ["integer", "null"]
+
+    HostAgentProcess:
+      type: object
+      properties:
+        name:
+          type: string
+        running:
+          type: boolean
+        cpuPercent:
+          type: ["number", "null"]
+        memBytes:
+          type: ["number", "null"]
+      required: [name, running]
+
+    HostAgentMetric:
+      type: object
+      properties:
+        id:
+          type: integer
+        hostId:
+          type: integer
+        collectedAt:
+          type: string
+        cpuPercent:
+          type: ["number", "null"]
+        cpuModel:
+          type: ["string", "null"]
+        memUsedBytes:
+          type: ["number", "null"]
+        memTotalBytes:
+          type: ["number", "null"]
+        uptimeSeconds:
+          type: ["number", "null"]
+        osVersion:
+          type: ["string", "null"]
+        scrapeOk:
+          type: boolean
+        processes:
+          type: array
+          items:
+            $ref: "#/components/schemas/HostAgentProcess"
+      required: [id, hostId, collectedAt, scrapeOk, processes]
+
+    HostAgentTestResult:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        url:
+          type: string
+        statusCode:
+          type: ["integer", "null"]
+        error:
+          type: ["string", "null"]
+        sample:
+          type: ["object", "null"]
+      required: [ok, url]
+
+    SshHost:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        ipAddress:
+          type: string
+        protocol:
+          type: string
+          enum: [ssh, telnet]
+        port:
+          type: integer
+        username:
+          type: string
+        systemType:
+          type: string
+          enum: [mikrotik, cisco, linux, windows, ubiquiti, fortinet, unknown]
+        enabled:
+          type: boolean
+        orderIndex:
+          type: integer
+      required: [id, name, ipAddress, protocol, port, username, systemType, enabled, orderIndex]
+
+    SshHostInput:
+      type: object
+      properties:
+        name:
+          type: string
+        ipAddress:
+          type: string
+        protocol:
+          type: string
+          enum: [ssh, telnet]
+        port:
+          type: integer
+        username:
+          type: string
+        password:
+          type: string
+        systemType:
+          type: string
+          enum: [mikrotik, cisco, linux, windows, ubiquiti, fortinet, unknown]
+        enabled:
+          type: boolean
+        orderIndex:
+          type: integer
+      required: [name, ipAddress, protocol, port, username, password, systemType]
+
+    SshHostUpdate:
+      type: object
+      properties:
+        name:
+          type: ["string", "null"]
+        ipAddress:
+          type: ["string", "null"]
+        protocol:
+          type: ["string", "null"]
+          enum: [ssh, telnet]
+        port:
+          type: ["integer", "null"]
+        username:
+          type: ["string", "null"]
+        password:
+          type: ["string", "null"]
+        systemType:
+          type: ["string", "null"]
+          enum: [mikrotik, cisco, linux, windows, ubiquiti, fortinet, unknown]
+        enabled:
+          type: ["boolean", "null"]
+        orderIndex:
+          type: ["integer", "null"]
+
+    LlmProviderStatus:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: [claude, gpt, gemini, deepseek, groq]
+        configured:
+          type: boolean
+        updatedAt:
+          type: ["string", "null"]
+      required: [provider, configured, updatedAt]
+
+    LlmProviderKeyInput:
+      type: object
+      properties:
+        apiKey:
+          type: string
+      required: [apiKey]
+
+    LlmProviderTestInput:
+      type: object
+      properties:
+        apiKey:
+          type: string
+      required: [apiKey]
+
+    LlmProviderTestResult:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        message:
+          type: string
+      required: [ok, message]
+
+    LlmModel:
+      type: object
+      properties:
+        id:
+          type: integer
+        provider:
+          type: string
+          enum: [claude, gpt, gemini, deepseek, groq]
+        modelId:
+          type: string
+        label:
+          type: string
+        enabled:
+          type: boolean
+        orderIndex:
+          type: integer
+      required: [id, provider, modelId, label, enabled, orderIndex]
+
+    LlmModelInput:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: [claude, gpt, gemini, deepseek, groq]
+        modelId:
+          type: string
+        label:
+          type: string
+        enabled:
+          type: boolean
+        orderIndex:
+          type: integer
+      required: [provider, modelId, label]
+
+    LlmModelUpdate:
+      type: object
+      properties:
+        modelId:
+          type: ["string", "null"]
+        label:
+          type: ["string", "null"]
+        enabled:
+          type: ["boolean", "null"]
+        orderIndex:
+          type: ["integer", "null"]
+
+    HostDiscoveryInput:
+      type: object
+      properties:
+        startIp:
+          type: string
+        endIp:
+          type: string
+      required: [startIp, endIp]
+
+    DiscoveredHost:
+      type: object
+      properties:
+        ipAddress:
+          type: string
+        reachable:
+          type: boolean
+      required: [ipAddress, reachable]
+
+    HostStatus:
+      type: object
+      properties:
+        hostId:
+          type: integer
+        status:
+          type: string
+          enum: [online, offline, unknown]
+        checkedAt:
+          type: ["string", "null"]
+        responseTimeMs:
+          type: ["integer", "null"]
+        consecutiveFailures:
+          type: integer
+        lastOnlineAt:
+          type: ["string", "null"]
+        lastOfflineAt:
+          type: ["string", "null"]
+        uptimePercent24h:
+          type: ["number", "null"]
+      required: [hostId, status, consecutiveFailures]
+
+    MonitoringSummary:
+      type: object
+      properties:
+        total:
+          type: integer
+        online:
+          type: integer
+        offline:
+          type: integer
+        unknown:
+          type: integer
+        pcTotal:
+          type: integer
+        pcOnline:
+          type: integer
+        serverTotal:
+          type: integer
+        serverOnline:
+          type: integer
+      required: [total, online, offline, unknown, pcTotal, pcOnline, serverTotal, serverOnline]
+
+    MikrotikConfig:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        ipAddress:
+          type: string
+        apiUser:
+          type: string
+        apiPort:
+          type: integer
+        enabled:
+          type: boolean
+        refreshIntervalSeconds:
+          type: integer
+      required: [id, name, ipAddress, apiUser, apiPort, enabled, refreshIntervalSeconds]
+
+    MikrotikConfigInput:
+      type: object
+      properties:
+        name:
+          type: string
+        ipAddress:
+          type: string
+        apiUser:
+          type: string
+        apiPassword:
+          type: string
+        apiPort:
+          type: integer
+        enabled:
+          type: boolean
+        refreshIntervalSeconds:
+          type: integer
+      required: [name, ipAddress, apiUser, apiPassword]
+
+    MikrotikInterface:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        running:
+          type: boolean
+        disabled:
+          type: boolean
+        macAddress:
+          type: string
+        rxBytes:
+          type: string
+        txBytes:
+          type: string
+        rxPackets:
+          type: string
+        txPackets:
+          type: string
+        rxRateBps:
+          type: ["number", "null"]
+        txRateBps:
+          type: ["number", "null"]
+        comment:
+          type: ["string", "null"]
+      required: [name, type, running, disabled, macAddress, rxBytes, txBytes, rxPackets, txPackets]
+
+    MikrotikHealth:
+      type: object
+      properties:
+        cpuTempC:
+          type: ["number", "null"]
+      required: [cpuTempC]
+
+    MikrotikFirewallFilterRule:
+      type: object
+      properties:
+        chain:
+          type: string
+        action:
+          type: string
+        srcAddress:
+          type: ["string", "null"]
+        dstAddress:
+          type: ["string", "null"]
+        protocol:
+          type: ["string", "null"]
+        disabled:
+          type: boolean
+        bytes:
+          type: string
+        packets:
+          type: string
+        comment:
+          type: ["string", "null"]
+      required: [chain, action, disabled, bytes, packets]
+
+    MikrotikFirewallNatRule:
+      type: object
+      properties:
+        chain:
+          type: string
+        action:
+          type: string
+        srcAddress:
+          type: ["string", "null"]
+        dstAddress:
+          type: ["string", "null"]
+        toAddresses:
+          type: ["string", "null"]
+        protocol:
+          type: ["string", "null"]
+        disabled:
+          type: boolean
+        bytes:
+          type: string
+        packets:
+          type: string
+        comment:
+          type: ["string", "null"]
+      required: [chain, action, disabled, bytes, packets]
+
+    MikrotikAddress:
+      type: object
+      properties:
+        address:
+          type: string
+        network:
+          type: string
+        interfaceName:
+          type: string
+        disabled:
+          type: boolean
+        comment:
+          type: ["string", "null"]
+      required: [address, network, interfaceName, disabled]
+
+    MikrotikLogEntry:
+      type: object
+      properties:
+        time:
+          type: string
+        topics:
+          type: string
+        message:
+          type: string
+      required: [time, topics, message]
+
+    MikrotikResources:
+      type: object
+      properties:
+        cpuLoad:
+          type: integer
+        freeMemory:
+          type: integer
+        totalMemory:
+          type: integer
+        uptime:
+          type: string
+        version:
+          type: string
+        boardName:
+          type: string
+      required: [cpuLoad, freeMemory, totalMemory, uptime, version, boardName]
+
+    MikrotikRoute:
+      type: object
+      properties:
+        dstAddress:
+          type: string
+        gateway:
+          type: string
+        distance:
+          type: integer
+        active:
+          type: boolean
+        dynamic:
+          type: boolean
+        comment:
+          type: ["string", "null"]
+      required: [dstAddress, gateway, distance, active, dynamic]
+
+    MikrotikDhcpLease:
+      type: object
+      properties:
+        address:
+          type: string
+        macAddress:
+          type: string
+        hostName:
+          type: ["string", "null"]
+        server:
+          type: string
+        status:
+          type: string
+        expiresAfter:
+          type: ["string", "null"]
+        comment:
+          type: ["string", "null"]
+      required: [address, macAddress, server, status]
+
+    AppSettings:
+      type: object
+      properties:
+        checkIntervalSeconds:
+          type: integer
+        pingAttempts:
+          type: integer
+        pingTimeoutMs:
+          type: integer
+        failuresBeforeOffline:
+          type: integer
+        backupIntervalHours:
+          type: integer
+        notificationDurationSeconds:
+          type: integer
+        agentCheckIntervalSeconds:
+          type: integer
+        internetCheckEnabled:
+          type: boolean
+        internetCheckIntervalSeconds:
+          type: integer
+        internetCheckHosts:
+          type: array
+          items:
+            type: string
+        internetCheckNotifyDesktop:
+          type: boolean
+      required: [checkIntervalSeconds, pingAttempts, pingTimeoutMs, failuresBeforeOffline, backupIntervalHours, notificationDurationSeconds, agentCheckIntervalSeconds, internetCheckEnabled, internetCheckIntervalSeconds, internetCheckHosts, internetCheckNotifyDesktop]
+
+    AppSettingsUpdate:
+      type: object
+      properties:
+        checkIntervalSeconds:
+          type: ["integer", "null"]
+        pingAttempts:
+          type: ["integer", "null"]
+        pingTimeoutMs:
+          type: ["integer", "null"]
+        failuresBeforeOffline:
+          type: ["integer", "null"]
+        backupIntervalHours:
+          type: ["integer", "null"]
+        notificationDurationSeconds:
+          type: ["integer", "null"]
+        agentCheckIntervalSeconds:
+          type: ["integer", "null"]
+        internetCheckEnabled:
+          type: ["boolean", "null"]
+        internetCheckIntervalSeconds:
+          type: ["integer", "null"]
+        internetCheckHosts:
+          type: array
+          items:
+            type: string
+          nullable: true
+        internetCheckNotifyDesktop:
+          type: ["boolean", "null"]
+
+    InternetStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [online, offline, unknown]
+        lastCheckedAt:
+          type: ["string", "null"]
+        lastChangedAt:
+          type: ["string", "null"]
+      required: [status]
+
+    BackupStatus:
+      type: object
+      properties:
+        lastBackupAt:
+          type: ["string", "null"]
+        nextBackupAt:
+          type: ["string", "null"]
+        backupDir:
+          type: string
+        intervalHours:
+          type: integer
+      required: [backupDir, intervalHours]
+
+    BackupRunResult:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        path:
+          type: string
+        message:
+          type: string
+      required: [ok, path, message]
+
+    SystemInfo:
+      type: object
+      properties:
+        appName:
+          type: string
+        appVersion:
+          type: string
+        appDescription:
+          type: string
+        developerName:
+          type: string
+        developerEmail:
+          type: string
+        nodeVersion:
+          type: string
+        hostname:
+          type: string
+        uptimeSeconds:
+          type: number
+        osKernel:
+          type: string
+        osDistro:
+          type: string
+        postgresVersion:
+          type: string
+        nginxVersion:
+          type: string
+        dbSize:
+          type: string
+      required: [appName, appVersion, appDescription, developerName, developerEmail, nodeVersion, hostname, uptimeSeconds, osKernel, osDistro, postgresVersion, nginxVersion, dbSize]
