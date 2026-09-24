@@ -18,7 +18,7 @@
 set -euo pipefail
 
 REPO_URL="https://github.com/raianwp/netmon-network-hub.git"
-CLONE_DIR="/root/netmon-network-hub"
+CLONE_DIR="/tmp/netmon-network-hub"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -49,14 +49,9 @@ fi
 
 echo -e "  Última versão: ${GREEN}${LATEST_TAG}${NC}"
 
-if [[ -d "$CLONE_DIR/.git" ]]; then
-  echo "  Pasta ${CLONE_DIR} já existe, atualizando..."
-  git -C "$CLONE_DIR" fetch --tags --quiet origin
-  git -C "$CLONE_DIR" checkout --quiet "$LATEST_TAG"
-else
-  echo "  Clonando em ${CLONE_DIR}..."
-  git clone --quiet --branch "$LATEST_TAG" --depth 1 "$REPO_URL" "$CLONE_DIR"
-fi
+rm -rf "$CLONE_DIR"
+echo "  Clonando em ${CLONE_DIR}..."
+git clone --quiet --branch "$LATEST_TAG" --depth 1 "$REPO_URL" "$CLONE_DIR"
 
 echo -e "${GREEN}${BOLD}[OK] Pronto. Iniciando o instalador do NetMon...${NC}"
 echo
