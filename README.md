@@ -55,6 +55,19 @@ Pra restaurar:
 
 ⚠️ Isso substitui **todo** o banco de dados atual (hosts, usuários, configurações) pelo conteúdo do backup escolhido. O arquivo `.env` (credenciais de conexão do banco) não é alterado.
 
+## NetMon Agent (monitoramento detalhado de Windows)
+
+Pra ver CPU, RAM, uptime, versão do Windows e processos rodando de um host Windows (além do ping básico), instale o NetMon Agent nele.
+
+**Download:** [netmon-agent-1.0.msi](https://github.com/raianwp/netmon-network-hub/releases/download/agent-v1.0/netmon-agent-1.0.msi)
+
+1. Rode o `.msi` no host Windows que você quer monitorar em detalhe.
+2. Na tela de firewall, deixe marcado "Criar regra no Firewall do Windows" (recomendado, senão o NetMon pode não conseguir coletar os dados).
+3. O instalador já registra o serviço `windows_exporter` configurado e rodando na porta `9182` — não precisa configurar nada a mais no Windows.
+4. No NetMon, vá em Cadastro, edite (ou crie) o host correspondente e ative o toggle **"Monitoramento Detalhado (Agent)"**.
+
+Depois disso, a tela de Monitoramento passa a mostrar um ícone extra nesse host pra abrir a janela de métricas detalhadas.
+
 ## Requisitos do servidor
 
 - Ubuntu Server 20.04+ (ou Debian equivalente)
